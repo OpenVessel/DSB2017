@@ -54,6 +54,7 @@ parser.add_argument('--n_test', default=8, type=int, metavar='N',
 
 def main():
     global args
+    ## passes argurements and assgins attributes
     args = parser.parse_args()
     
     

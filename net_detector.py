@@ -4,10 +4,10 @@ from layers import *
 
 config = {}
 config['anchors'] = [ 10.0, 30.0, 60.]
-config['chanel'] = 1
-config['crop_size'] = [128, 128, 128]
+config['chanel'] = 1 ## channel 1??? 
+config['crop_size'] = [128, 128, 128] ## Crop size of tthe image
 config['stride'] = 4
-config['datadir'] = '/run/shm/preprocess_1_3/'
+config['datadir'] = '/run/shm/preprocess_1_3/' # is this value rihgtt
 
 config['max_stride'] = 16
 config['num_neg'] = 800

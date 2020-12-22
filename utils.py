@@ -3,7 +3,7 @@ import os
 import numpy as np
 import torch
 def getFreeId():
-    import pynvml 
+    import pynvml #Provides a Python interface to GPU management and monitoring functions.
 
     pynvml.nvmlInit()
     def getFreeRatio(id):
@@ -50,7 +50,9 @@ class Logger(object):
         #you might want to specify some extra behavior here.
         pass    
 
-
+## 
+## Split and combine data?????
+##
 def split4(data,  max_stride, margin):
     splits = []
     data = torch.Tensor.numpy(data)

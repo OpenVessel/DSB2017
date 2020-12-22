@@ -17,7 +17,7 @@ from torch.autograd import Variable
 
 from layers import acc
 
-def test_detect(data_loader, net, get_pbb, save_dir, config,n_gpu):
+def test_detect(data_loader, net, get_pbb, save_dir, config, n_gpu):
     start_time = time.time()
     net.eval()
     split_comber = data_loader.dataset.split_comber
@@ -73,5 +73,3 @@ def test_detect(data_loader, net, get_pbb, save_dir, config,n_gpu):
 
 
     print('elapsed time is %3.2f seconds' % (end_time - start_time))
-    print
-    print

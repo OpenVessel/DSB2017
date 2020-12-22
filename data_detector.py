@@ -13,25 +13,27 @@ from scipy.ndimage.morphology import binary_dilation,generate_binary_structure
 
 class DataBowl3Detector(Dataset):
     def __init__(self, split, config, phase = 'train',split_comber=None):
+        ### Config1 parameters 
         assert(phase == 'train' or phase == 'val' or phase == 'test')
         self.phase = phase
-        self.max_stride = config['max_stride']       
+        self.max_stride = config['max_stride']  ### is how the convnet moves across the data 
         self.stride = config['stride']       
         sizelim = config['sizelim']/config['reso']
         sizelim2 = config['sizelim2']/config['reso']
         sizelim3 = config['sizelim3']/config['reso']
-        self.blacklist = config['blacklist']
-        self.isScale = config['aug_scale']
-        self.r_rand = config['r_rand_crop']
-        self.augtype = config['augtype']
+        self.blacklist = config['blacklist'] ## blacklist is Patient are not being detector 
+        self.isScale = config['aug_scale'] # True 
+        self.r_rand = config['r_rand_crop'] 
+        self.augtype = config['augtype'] #{'flip':True,'swap':False,'scale':True,'rotate':False}
         data_dir = config['datadir']
-	self.pad_value = config['pad_value']
+        self.pad_value = config['pad_value']
         
         self.split_comber = split_comber
-        idcs = split
+        idcs = split # np.load(split_path)#like 'subset0/1.3.6.1.4.1.14519.5.2.1.6279.6001.277445975068759205899107114231'/'subset0/1.3.6.1.4.1.14519.5.2.1.6279.6001.105756658031515062000744821260'/......
         if phase!='test':
             idcs = [f for f in idcs if f not in self.blacklist]
 
+        ### ???
         self.channel = config['chanel']
         if self.channel==2:
             self.filenames = [os.path.join(data_dir, '%s_merge.npy' % idx) for idx in idcs]
@@ -45,6 +47,9 @@ class DataBowl3Detector(Dataset):
         
         labels = []
         
+        ### LOADS NumPy data
+        ### FileNote found eroor 
+        idcs=idcs[0:2]
         for idx in idcs:
             if config['luna_raw'] ==True:
                 try:
@@ -54,6 +59,7 @@ class DataBowl3Detector(Dataset):
             else:
                 l = np.load(os.path.join(data_dir, '%s_label.npy' %idx))
             labels.append(l)
+            ## Third array?
 
         self.sample_bboxes = labels
         if self.phase!='test':
@@ -76,7 +82,8 @@ class DataBowl3Detector(Dataset):
         t = time.time()
         np.random.seed(int(str(t%1)[2:7]))#seed according to time
 
-	isRandomImg  = False
+        ### Random image?
+        isRandomImg  = False
         if self.phase !='test':
             if idx>=len(self.bboxes):
                 isRandom = True
@@ -90,7 +97,7 @@ class DataBowl3Detector(Dataset):
         if self.phase != 'test':
             if not isRandomImg:
                 bbox = self.bboxes[idx]
-		filename = self.filenames[int(bbox[0])]
+                filename = self.filenames[int(bbox[0])]
                 imgs = np.load(filename)[0:self.channel]
                 bboxes = self.sample_bboxes[int(bbox[0])]
                 isScale = self.augtype['scale'] and (self.phase=='train')
@@ -100,7 +107,7 @@ class DataBowl3Detector(Dataset):
                         ifflip = self.augtype['flip'], ifrotate=self.augtype['rotate'], ifswap = self.augtype['swap'])
             else:
                 randimid = np.random.randint(len(self.kagglenames))
-		filename = self.kagglenames[randimid]
+                filename = self.kagglenames[randimid]
                 imgs = np.load(filename)[0:self.channel]
                 bboxes = self.sample_bboxes[randimid]
                 isScale = self.augtype['scale'] and (self.phase=='train')
@@ -119,15 +126,31 @@ class DataBowl3Detector(Dataset):
             ph = int(np.ceil(float(nh) / self.stride)) * self.stride
             pw = int(np.ceil(float(nw) / self.stride)) * self.stride
             imgs = np.pad(imgs, [[0,0],[0, pz - nz], [0, ph - nh], [0, pw - nw]], 'constant',constant_values = self.pad_value)
-            xx,yy,zz = np.meshgrid(np.linspace(-0.5,0.5,imgs.shape[1]/self.stride),
-                                   np.linspace(-0.5,0.5,imgs.shape[2]/self.stride),
-                                   np.linspace(-0.5,0.5,imgs.shape[3]/self.stride),indexing ='ij')
+            #print(type(imgs))
+            #print(imgs.shape)
+            #print(imgs.shape[1]/self.stride)
+            #print(np.linspace(-0.5,0.5,int(imgs.shape[1]/self.stride)))
+
+
+            ### addition of int() around imgs.shape[1]/self.stride
+
+            xx,yy,zz = np.meshgrid(np.linspace(-0.5,0.5,int(imgs.shape[1]/self.stride)),
+                                   np.linspace(-0.5,0.5,int(imgs.shape[2]/self.stride)),
+                                   np.linspace(-0.5,0.5,int(imgs.shape[3]/self.stride)),indexing ='ij')
             coord = np.concatenate([xx[np.newaxis,...], yy[np.newaxis,...],zz[np.newaxis,:]],0).astype('float32')
+
+            #print(imgs)
+
+            ### related to split combers
             imgs, nzhw = self.split_comber.split(imgs)
+            #print(imgs)
+            print(type(self.split_comber.margin/self.stride))
+            print(self.split_comber.margin/self.stride)
+            #### Addiation of int() around TypeError: `pad_width` must be of integral type. -> self.split_comber.margin/self.stride
             coord2, nzhw2 = self.split_comber.split(coord,
-                                                   side_len = self.split_comber.side_len/self.stride,
-                                                   max_stride = self.split_comber.max_stride/self.stride,
-                                                   margin = self.split_comber.margin/self.stride)
+                                                   side_len = int(self.split_comber.side_len/self.stride),
+                                                   max_stride = int(self.split_comber.max_stride/self.stride),
+                                                   margin = int(self.split_comber.margin/self.stride))
             assert np.all(nzhw==nzhw2)
             imgs = (imgs.astype(np.float32)-128)/128
             return torch.from_numpy(imgs.astype(np.float32)), bboxes, torch.from_numpy(coord2.astype(np.float32)), np.array(nzhw)
@@ -135,8 +158,8 @@ class DataBowl3Detector(Dataset):
     def __len__(self):
         if self.phase == 'train':
             return len(self.bboxes)/(1-self.r_rand)
-	elif self.phase =='val':
-	    return len(self.bboxes)
+        elif self.phase =='val':
+            return len(self.bboxes)
         else:
             return len(self.filenames)
         
@@ -187,7 +210,7 @@ class Crop(object):
         self.crop_size = config['crop_size']
         self.bound_size = config['bound_size']
         self.stride = config['stride']
-	self.pad_value = config['pad_value']
+        self.pad_value = config['pad_value']
 
     def __call__(self, imgs, target, bboxes,isScale=False,isRand=False):
         if isScale:
@@ -414,4 +437,3 @@ def collate(batch):
     elif isinstance(batch[0], collections.Iterable):
         transposed = zip(*batch)
         return [collate(samples) for samples in transposed]
-

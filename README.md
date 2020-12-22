@@ -3,7 +3,9 @@
  First goal is conversion of python 2.7 to python 3.7 the files and code kept here not the full  <br />
  2nd goal is mergering of methods and testing against a competing model of Juliandewit https://github.com/juliandewit/kaggle_ndsb2017 <br />
 ### Preprocessing
-### Detection are current 
+Preprocessing for some code is update date for python 3.7 
+### Detection 
+The detection class works currently for python 3.7 
 
 ## references
 https://github.com/lfz/DSB2017<br />
